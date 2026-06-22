@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "layer_counts": {
+    "evergreen": 5,
+    "hot": 10,
+    "preheat": 5
+  },
+  "allocations": {
+    "evergreen": 45,
+    "hot": 70,
+    "preheat": 45
+  },
+  "feedback_tuning": {
+    "enabled": true,
+    "lookback_days": 7,
+    "replace_counts": {
+      "evergreen": 1,
+      "hot": 2,
+      "preheat": 1
+    },
+    "allocation_min_multiplier": 0.6,
+    "allocation_max_multiplier": 1.4
+  },
+  "country_pool": {
+    "US": {
+      "enabled": true,
+      "aliases": ["United States", "USA"]
+    },
+    "Europe": {
+      "enabled": true,
+      "aliases": ["UK", "Germany", "France", "Spain", "Italy"]
+    },
+    "Mexico": {
+      "enabled": true,
+      "aliases": []
+    },
+    "Brazil": {
+      "enabled": true,
+      "aliases": []
+    },
+    "Australia": {
+      "enabled": true,
+      "aliases": []
+    },
+    "India": {
+      "enabled": true,
+      "aliases": []
+    }
+  },
+  "evergreen": {
+    "lookback_days": 30,
+    "fallback_keywords": [
+      "photo to video ai",
+      "ai face animation",
+      "before after photo",
+      "ai avatar puzzle",
+      "ai action figure"
+    ],
+    "candidate_keywords": [
+      "photo to video ai",
+      "ai face animation",
+      "ai emote face animation",
+      "ai action figure",
+      "ai image to video",
+      "selfie to video ai",
+      "ai viral effect",
+      "ai portrait template",
+      "creator transformation edit",
+      "before after photo",
+      "old photo restoration",
+      "ai photo enhancer before after",
+      "ai avatar puzzle",
+      "avatar puzzle challenge",
+      "clay avatar puzzle"
+    ]
+  },
+  "hot": {
+    "history_lookback_hours": 72,
+    "max_history_terms": 20,
+    "event_keywords": [
+      "world cup poster",
+      "world cup jersey edit",
+      "football celebration edit",
+      "match entrance edit",
+      "world cup ai photo",
+      "football card edit"
+    ],
+    "fallback_keywords": [
+      "world cup poster",
+      "world cup jersey edit",
+      "football celebration edit",
+      "match entrance edit",
+      "world cup ai photo",
+      "football card edit",
+      "sports poster edit",
+      "jersey portrait edit",
+      "cinematic sports edit",
+      "training transformation"
+    ],
+    "ad_material_keywords": [
+      "poster",
+      "jersey",
+      "celebration",
+      "entrance",
+      "card",
+      "portrait",
+      "transition",
+      "template",
+      "training",
+      "transformation",
+      "cinematic",
+      "fireworks",
+      "family",
+      "slideshow",
+      "photo",
+      "edit"
+    ]
+  },
+  "preheat": {
+    "event_window_days": 30,
+    "boost_window_days": 14,
+    "active_after_days": 2,
+    "max_terms_per_event": 3,
+    "fallback_keywords": [
+      "fathers day photo template",
+      "dad photo slideshow",
+      "family memory photo",
+      "4th of july photo template",
+      "fireworks portrait edit"
+    ],
+    "events": [
+      {
+        "name": "Father's Day 2026",
+        "type": "holiday",
+        "date": "2026-06-21",
+        "countries": ["US", "Europe", "Mexico", "Brazil", "Australia", "India"],
+        "keywords": [
+          "fathers day photo template",
+          "dad photo slideshow",
+          "family memory photo",
+          "dad old photo restoration",
+          "fathers day photo to video ai"
+        ]
+      },
+      {
+        "name": "Independence Day / America250",
+        "type": "holiday",
+        "date": "2026-07-04",
+        "countries": ["US"],
+        "keywords": [
+          "4th of july photo template",
+          "fireworks portrait edit",
+          "usa flag transition",
+          "independence day poster",
+          "america 250 celebration"
+        ]
+      }
+    ]
+  },
+  "external_sources": {
+    "enabled": true,
+    "hot": {
+      "tiktok_creative_center": {
+        "enabled": true,
+        "timeout_seconds": 8,
+        "top_n": 30,
+        "urls": [
+          "https://ads.tiktok.com/business/creativecenter/inspiration/popular/hashtag/mobile/en",
+          "https://ads.tiktok.com/business/creativecenter/inspiration/popular/music/mobile/en",
+          "https://ads.tiktok.com/business/creativecenter/inspiration/popular/video/mobile/en"
+        ],
+        "keyword_templates": [
+          "{trend} edit",
+          "{trend} poster",
+          "{trend} photo template",
+          "{trend} transition",
+          "{trend} jersey edit"
+        ]
+      },
+      "google_trends": {
+        "enabled": true,
+        "timeout_seconds": 8,
+        "top_n": 30,
+        "countries": ["US", "GB", "DE", "FR", "ES", "IT", "MX", "BR", "AU", "IN"],
+        "rss_url": "https://trends.google.com/trending/rss?geo={country}",
+        "keyword_templates": [
+          "{trend} edit",
+          "{trend} poster",
+          "{trend} photo template",
+          "{trend} transition",
+          "{trend} celebration edit"
+        ]
+      },
+      "recent_discovery_history": {
+        "enabled": true,
+        "lookback_hours": 72,
+        "max_terms": 20
+      }
+    },
+    "preheat": {
+      "nager_date": {
+        "enabled": true,
+        "timeout_seconds": 8,
+        "lookahead_days": 45,
+        "countries": ["US", "GB", "DE", "FR", "ES", "IT", "MX", "BR", "AU", "IN"],
+        "url": "https://date.nager.at/api/v3/PublicHolidays/{year}/{country}"
+      },
+      "thesportsdb": {
+        "enabled": true,
+        "timeout_seconds": 8,
+        "lookahead_days": 45,
+        "api_key": "3",
+        "url": "https://www.thesportsdb.com/api/v1/json/{api_key}/eventsnextleague.php?{query}",
+        "leagues": [
+          {"name": "FIFA World Cup", "id": "4429", "sport": "Soccer"},
+          {"name": "English Premier League", "id": "4328", "sport": "Soccer"},
+          {"name": "NBA", "id": "4387", "sport": "Basketball"}
+        ]
+      },
+      "liquipedia": {
+        "enabled": true,
+        "timeout_seconds": 8,
+        "lookahead_days": 60,
+        "calendar_path": "references/liquipedia_esports_events.json",
+        "events": [],
+        "urls": [],
+        "games": ["league of legends", "valorant", "cs2", "dota 2"]
+      }
+    }
+  },
+  "risk_keywords": [
+    "score",
+    "highlights",
+    "news",
+    "gossip",
+    "paparazzi",
+    "leak",
+    "spoiler",
+    "politics",
+    "war",
+    "nsfw",
+    "bikini",
+    "sexy",
+    "onlyfans",
+    "crypto",
+    "web3",
+    "meme"
+  ]
+}

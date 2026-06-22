@@ -1,0 +1,14 @@
+{
+  "name": "social-media-hotspots-tiktok-scraper",
+  "version": "1.0.0",
+  "description": "TikTok scraper with Apify primary path and RapidAPI fallback",
+  "main": "src/scraper.js",
+  "scripts": {
+    "scrape": "node src/scraper.js",
+    "start": "node src/scraper.js"
+  },
+  "dependencies": {
+    "apify-client": "^2.23.2"
+  }
+}
+

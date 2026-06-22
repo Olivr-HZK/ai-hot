@@ -1,0 +1,4 @@
+interface:
+  display_name: "Google Lens Eagle Import"
+  short_description: "Run Lens matches into Eagle"
+  default_prompt: "Use $google-lens-eagle-import to process these images through Google Lens and import the top Visual matches into Eagle."

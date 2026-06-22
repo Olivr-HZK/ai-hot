@@ -1,0 +1,29 @@
+{
+  "rapidApiHost": "twitter241.p.rapidapi.com",
+  "search": {
+    "endpoint": "/search-v3",
+    "type": "Top",
+    "count": 20,
+    "pagesPerTerm": 5,
+    "minFilteredPerTerm": 5,
+    "maxFilteredPerTerm": 20,
+    "cursor": "",
+    "searchTerms": [
+      "ai video",
+      "ai effect",
+      "ai dance",
+      "ai photo",
+      "ai style"
+    ]
+  },
+  "filters": {
+    "maxHoursAgo": 72,
+    "minViewCount": 0,
+    "minLikeCount": 0,
+    "recentMinLikeCount": 50,
+    "recentMinRetweetCount": 20,
+    "fallbackMinLikeCount": 20,
+    "fallbackMinRetweetCount": 5,
+    "maxVideoDurationSeconds": 30
+  }
+}

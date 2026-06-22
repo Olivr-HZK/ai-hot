@@ -1,0 +1,27 @@
+{
+  "customParams": {
+    "commentsPerPost": 20,
+    "excludePinnedPosts": false,
+    "maxFollowersPerProfile": 0,
+    "maxFollowingPerProfile": 0,
+    "maxRepliesPerComment": 0,
+    "proxyCountryCode": "None",
+    "resultsPerPage": 20,
+    "scrapeRelatedVideos": false,
+    "searchDatePosted": "3",
+    "searchSection": "/video",
+    "searchSorting": "0",
+    "shouldDownloadAvatars": false,
+    "shouldDownloadCovers": false,
+    "shouldDownloadMusicCovers": false,
+    "shouldDownloadSlideshowImages": false,
+    "shouldDownloadVideos": false
+  },
+  "resultsPerKeyword": 35,
+  "filters": {
+    "minPlayCount": 0,
+    "minDiggCount": 0,
+    "minShareCount": 0,
+    "languages": []
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "x-scraper",
+  "version": "1.0.0",
+  "description": "X scraper powered by the RapidAPI Twttr API",
+  "main": "src/scraper.js",
+  "scripts": {
+    "start": "node src/scraper.js"
+  },
+  "keywords": ["x", "scraper", "rapidapi", "twitter241"],
+  "author": "Greatbay Studio",
+  "license": "MIT"
+}
