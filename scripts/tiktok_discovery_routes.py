@@ -190,7 +190,15 @@ def approved_path_from_report(report: dict[str, Any], run_id: str) -> Path:
     return DISCOVERY_ROOT / "runs" / run_id / "10_approved.json"
 
 
-def run_discovery_route(route: str, run_id: str, env: dict[str, str]) -> tuple[list[dict[str, Any]], dict[str, Any], int]:
+def apply_headless_override(command: list[str], headless: bool | None) -> list[str]:
+    if headless is None:
+        return command
+    if headless:
+        return [*command, "--headless", "--detail-headless"]
+    return [*command, "--visible-browser", "--visible-detail-browser"]
+
+
+def run_discovery_route(route: str, run_id: str, env: dict[str, str], *, headless: bool | None = None) -> tuple[list[dict[str, Any]], dict[str, Any], int]:
     if route == "ua":
         command = [
             str(PYTHON),
@@ -221,6 +229,7 @@ def run_discovery_route(route: str, run_id: str, env: dict[str, str]) -> tuple[l
             "--stage4-profile",
             "product",
         ]
+    command = apply_headless_override(command, headless)
     exit_code = subprocess.run(command, cwd=BASE_DIR, env=env, capture_output=False).returncode
     report = read_json(discovery_report_path(run_id), {})
     if exit_code != 0 or not isinstance(report, dict) or report.get("status") != "success":
@@ -242,16 +251,44 @@ def product_per_window_limit() -> int:
         return 1
 
 
+def parse_routes(raw: str | None = None) -> list[str]:
+    value = str(raw if raw is not None else os.environ.get("TIKTOK_DISCOVERY_ROUTES", "ua,product")).strip().lower()
+    if value in {"", "all", "both", "default"}:
+        value = "ua,product"
+    aliases = {
+        "tiktok-ua": "ua",
+        "tiktok_ua": "ua",
+        "tiktok-product": "product",
+        "tiktok_product": "product",
+    }
+    routes: list[str] = []
+    for part in value.replace("+", ",").split(","):
+        route = aliases.get(part.strip(), part.strip())
+        if not route:
+            continue
+        if route not in {"ua", "product"}:
+            raise ValueError(f"Unsupported TikTok discovery route: {route}. Supported: ua,product")
+        if route not in routes:
+            routes.append(route)
+    if not routes:
+        raise ValueError("At least one TikTok discovery route must be configured")
+    return routes
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run TikTok main pipeline through Discovery UA/Product routes")
     parser.add_argument("--output", type=Path, default=SKILL_RUNS_DIR / "hotspots_tiktok.json")
     parser.add_argument("--skip-scrape", action="store_true", help="Reuse existing route output files")
     parser.add_argument("--run-id")
+    parser.add_argument("--routes", help="Comma-separated TikTok discovery routes: ua,product. Defaults to TIKTOK_DISCOVERY_ROUTES or ua,product")
+    parser.add_argument("--headless", dest="headless", action="store_true", default=None)
+    parser.add_argument("--headed", "--visible-browser", dest="headless", action="store_false")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    routes = parse_routes(args.routes)
     pipeline_run_id = args.run_id or os.environ.get("PIPELINE_RUN_ID") or run_id_from_now()
     started_at = now_iso()
     report: dict[str, Any] = {
@@ -266,49 +303,65 @@ def main() -> int:
             "product": relative_path(PRODUCT_OUTPUT),
             "merged": relative_path(args.output),
         },
+        "requestedRoutes": routes,
         "handoffUrl": "",
         "itemCount": 0,
         "error": "",
     }
     try:
+        ua_items: list[dict[str, Any]] = []
+        product_items: list[dict[str, Any]] = []
+        handoff: dict[str, Any] | None = None
         if args.skip_scrape:
-            ua_items = normalize_ua_items(read_json(UA_OUTPUT, []))
-            product_items = normalize_product_items(read_json(PRODUCT_OUTPUT, []))
-            report["routes"]["ua"] = {"status": "reused", "itemCount": len(ua_items)}
-            report["routes"]["product"] = {"status": "reused", "itemCount": len(product_items)}
+            if "ua" in routes:
+                ua_items = normalize_ua_items(read_json(UA_OUTPUT, []))
+                report["routes"]["ua"] = {"status": "reused", "itemCount": len(ua_items)}
+            else:
+                report["routes"]["ua"] = {"status": "skipped", "itemCount": 0}
+            if "product" in routes:
+                product_items = normalize_product_items(read_json(PRODUCT_OUTPUT, []))
+                report["routes"]["product"] = {"status": "reused", "itemCount": len(product_items)}
+            else:
+                report["routes"]["product"] = {"status": "skipped", "itemCount": 0}
         else:
             env = {**os.environ, "PIPELINE_RUN_ID": pipeline_run_id}
             ua_run_id = f"{pipeline_run_id}_tiktok_ua"
             product_run_id = f"{pipeline_run_id}_tiktok_product"
-            ua_raw, ua_report, ua_code = run_discovery_route("ua", ua_run_id, env)
-            report["routes"]["ua"] = {
-                "status": "success" if ua_code == 0 else "failed",
-                "runId": ua_run_id,
-                "itemCount": len(ua_raw),
-                "reportPath": relative_path(discovery_report_path(ua_run_id)),
-                "error": ua_report.get("error", "") if isinstance(ua_report, dict) else "",
-            }
-            if ua_code != 0:
-                report["error"] = f"TikTok UA Discovery route failed with exit code {ua_code}"
-                return ua_code
-            ua_items = normalize_ua_items(ua_raw)
-            handoff = select_ua_product_handoff(ua_items)
-            if handoff:
-                report["handoffUrl"] = item_key(handoff)
-            product_raw, product_report, product_code = run_discovery_route("product", product_run_id, env)
-            report["routes"]["product"] = {
-                "status": "success" if product_code == 0 else "failed",
-                "runId": product_run_id,
-                "itemCount": len(product_raw),
-                "reportPath": relative_path(discovery_report_path(product_run_id)),
-                "perWindowLimit": product_per_window_limit(),
-                "error": product_report.get("error", "") if isinstance(product_report, dict) else "",
-            }
-            if product_code != 0:
-                report["error"] = f"TikTok Product Discovery route failed with exit code {product_code}"
-                return product_code
-            product_items = normalize_product_items(product_raw)
-            product_items = merge_product_handoff(product_items, handoff)
+            if "ua" in routes:
+                ua_raw, ua_report, ua_code = run_discovery_route("ua", ua_run_id, env, headless=args.headless)
+                report["routes"]["ua"] = {
+                    "status": "success" if ua_code == 0 else "failed",
+                    "runId": ua_run_id,
+                    "itemCount": len(ua_raw),
+                    "reportPath": relative_path(discovery_report_path(ua_run_id)),
+                    "error": ua_report.get("error", "") if isinstance(ua_report, dict) else "",
+                }
+                if ua_code != 0:
+                    report["error"] = f"TikTok UA Discovery route failed with exit code {ua_code}"
+                    return ua_code
+                ua_items = normalize_ua_items(ua_raw)
+                handoff = select_ua_product_handoff(ua_items)
+                if handoff:
+                    report["handoffUrl"] = item_key(handoff)
+            else:
+                report["routes"]["ua"] = {"status": "skipped", "itemCount": 0}
+            if "product" in routes:
+                product_raw, product_report, product_code = run_discovery_route("product", product_run_id, env, headless=args.headless)
+                report["routes"]["product"] = {
+                    "status": "success" if product_code == 0 else "failed",
+                    "runId": product_run_id,
+                    "itemCount": len(product_raw),
+                    "reportPath": relative_path(discovery_report_path(product_run_id)),
+                    "perWindowLimit": product_per_window_limit(),
+                    "error": product_report.get("error", "") if isinstance(product_report, dict) else "",
+                }
+                if product_code != 0:
+                    report["error"] = f"TikTok Product Discovery route failed with exit code {product_code}"
+                    return product_code
+                product_items = normalize_product_items(product_raw)
+                product_items = merge_product_handoff(product_items, handoff)
+            else:
+                report["routes"]["product"] = {"status": "skipped", "itemCount": 0, "perWindowLimit": product_per_window_limit()}
 
         merged = merge_route_outputs(ua_items, product_items)
         write_json(UA_OUTPUT, ua_items)

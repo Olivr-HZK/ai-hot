@@ -160,7 +160,15 @@ def normalize_push_object(value: Any) -> str:
         return "ALL"
     if text == "ua":
         return "UA"
+    if text in {"产品", "product"}:
+        return "产品"
     return PUSH_OBJECT_DEFAULT
+
+
+def normalize_bitable_push_object(item: dict[str, Any]) -> str:
+    if is_tiktok_product_item(item):
+        return "产品"
+    return normalize_push_object(item.get("pushObject"))
 
 
 def append_logic_marker(intro: Any, variant: Any) -> str:
@@ -243,7 +251,7 @@ def build_bitable_fields(item: dict[str, Any], push_time: datetime | None = None
         WRITE_FIELD_NAMES["comments"]: safe_int(item.get("commentCount")),
         WRITE_FIELD_NAMES["publish_days"]: safe_int(item.get("publishDays")),
         WRITE_FIELD_NAMES["heat"]: float(item.get("heatValue") or 0),
-        WRITE_FIELD_NAMES["push_object"]: normalize_push_object(item.get("pushObject")),
+        WRITE_FIELD_NAMES["push_object"]: normalize_bitable_push_object(item),
         WRITE_FIELD_NAMES["auto_prompt"]: clean_inline_text(item.get("autoPromptText")),
     }
     return {key: value for key, value in fields.items() if key not in READONLY_FEEDBACK_FIELDS}

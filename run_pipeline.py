@@ -847,14 +847,28 @@ def enrich_with_scrape_status(result: dict[str, Any], platform: str, run_id: str
         result["partialReason"] = str(status.get("error") or "")
 
 
+def platform_headless_args(platform: str, env: dict[str, str]) -> list[str]:
+    if platform != "tiktok" or "TIKTOK_DISCOVERY_HEADLESS" not in env:
+        return []
+    return ["--headless"] if env_bool("TIKTOK_DISCOVERY_HEADLESS", True, env) else ["--headed"]
+
+
+def build_platform_command(platform: str, *, skip_scrape: bool, env: dict[str, str]) -> list[str]:
+    script = PLATFORM_SCRIPTS[platform]
+    output_path = PLATFORM_OUTPUTS[platform]
+    command = [str(PYTHON), str(script), "--output", str(output_path)]
+    if skip_scrape:
+        command.insert(2, "--skip-scrape")
+    command.extend(platform_headless_args(platform, env))
+    return command
+
+
 def run_platform(platform: str, *, run_id: str, skip_scrape: bool, env: dict[str, str]) -> dict[str, Any]:
     script = PLATFORM_SCRIPTS[platform]
     output_path = PLATFORM_OUTPUTS[platform]
     timeout_seconds = platform_timeout_seconds(platform, env)
     log_path = platform_log_path(platform, run_id)
-    command = [str(PYTHON), str(script), "--output", str(output_path)]
-    if skip_scrape:
-        command.insert(2, "--skip-scrape")
+    command = build_platform_command(platform, skip_scrape=skip_scrape, env=env)
     result: dict[str, Any] = {
         "platform": platform,
         "status": "failed",
